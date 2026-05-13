@@ -114,9 +114,8 @@ authentication enabled, add this as a **repository secret**:
    | Input | Description | Default |
    |---|---|---|
    | `prompt` | Text description of the desired image | *(required)* |
-   | `size` | Image dimensions | `1024x1024` |
-   | `quality` | `standard` or `hd` | `standard` |
-   | `style` | `vivid` or `natural` | `vivid` |
+  | `size` | Image dimensions, such as `1024x1024`, `1536x1024`, or `1024x1536` | `1024x1024` |
+  | `quality` | `low`, `medium`, `high`, or `auto` | `medium` |
    | `output_filename` | File name for the saved image | `image.png` |
 
 5. Click **Run workflow** to start.
@@ -145,7 +144,7 @@ docs/
 ### `DefaultAzureCredential failed`
 
 - Confirm the workflow has `id-token: write` permission (already present).
-- Confirm `azure/login@v2` ran successfully in the same job.
+- Confirm `azure/login@v3` ran successfully in the same job.
 - Check the federated credential subject matches the repository and branch or
   environment.
 
@@ -188,5 +187,5 @@ docs/
 - Scope Azure role assignments as narrowly as practical (resource-level, not
   subscription-level).
 - Generated image URLs returned by the Azure OpenAI API are **temporary**.
-  The workflow saves the image bytes to a file and uploads it as a durable
-  artifact; the URL itself is not logged.
+  The workflow downloads the image bytes to a file and uploads it as a durable
+  artifact; the URL itself is not logged or stored in metadata.

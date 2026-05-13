@@ -16,9 +16,8 @@ Optional environment variables:
 
 Command-line arguments:
   --prompt   TEXT    Image description (required)
-  --size     TEXT    Image size, e.g. 1024x1024 (default: 1024x1024)
-  --quality  TEXT    Image quality: standard or hd (default: standard)
-  --style    TEXT    Image style: vivid or natural (default: vivid)
+    --size     TEXT    Image size, e.g. 1024x1024 (default: 1024x1024)
+    --quality  TEXT    Image quality: low, medium, high, or auto (default: medium)
   --output   FILE    Output file path (default: image.png)
 """
 
@@ -31,6 +30,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.request import urlopen
 
 
 AZURE_OPENAI_API_VERSION = "2024-02-01"
@@ -51,15 +51,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--quality",
-        default="standard",
-        choices=["standard", "hd"],
-        help="Image quality (default: standard).",
-    )
-    parser.add_argument(
-        "--style",
-        default="vivid",
-        choices=["vivid", "natural"],
-        help="Image style (default: vivid).",
+        default="medium",
+        choices=["low", "medium", "high", "auto"],
+        help="Image quality (default: medium).",
     )
     parser.add_argument(
         "--output",
@@ -150,24 +144,25 @@ def generate_image(client, settings: dict, args: argparse.Namespace) -> dict:
     """Call Azure OpenAI image generation and return response metadata."""
     deployment = settings["deployment"]
     print(f"INFO: Generating image with deployment='{deployment}', size={args.size}, "
-          f"quality={args.quality}, style={args.style}.")
+          f"quality={args.quality}.")
+
+    request = {
+        "model": deployment,
+        "prompt": args.prompt,
+        "n": 1,
+        "size": args.size,
+        "quality": args.quality,
+    }
 
     try:
-        response = client.images.generate(
-            model=deployment,
-            prompt=args.prompt,
-            n=1,
-            size=args.size,
-            quality=args.quality,
-            style=args.style,
-            response_format="b64_json",
-        )
+        response = client.images.generate(**request)
     except Exception as exc:
         _handle_api_error(exc)
 
     image_data = response.data[0]
     return {
-        "b64_json": image_data.b64_json,
+        "b64_json": getattr(image_data, "b64_json", None),
+        "url": getattr(image_data, "url", None),
         "revised_prompt": getattr(image_data, "revised_prompt", None),
     }
 
@@ -229,6 +224,16 @@ def save_image(b64_data: str, output_path: str) -> None:
     print(f"INFO: Image saved to '{output_path}' ({len(image_bytes):,} bytes).")
 
 
+def download_image(url: str, output_path: str) -> None:
+    """Download an image from a temporary Azure OpenAI URL."""
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with urlopen(url, timeout=60) as response:
+        image_bytes = response.read()
+    output.write_bytes(image_bytes)
+    print(f"INFO: Image downloaded to '{output_path}' ({len(image_bytes):,} bytes).")
+
+
 def save_metadata(args: argparse.Namespace, result: dict, output_path: str) -> None:
     """Write generation metadata as a JSON file alongside the image."""
     metadata_path = Path(output_path).with_suffix(".json")
@@ -238,7 +243,7 @@ def save_metadata(args: argparse.Namespace, result: dict, output_path: str) -> N
         "revised_prompt": result.get("revised_prompt"),
         "size": args.size,
         "quality": args.quality,
-        "style": args.style,
+        "response_type": "b64_json" if result.get("b64_json") else "url",
         "output_file": output_path,
     }
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -256,7 +261,13 @@ def main() -> None:
     settings = load_settings()
     client = build_client(settings)
     result = generate_image(client, settings, args)
-    save_image(result["b64_json"], args.output)
+    if result.get("b64_json"):
+        save_image(result["b64_json"], args.output)
+    elif result.get("url"):
+        download_image(result["url"], args.output)
+    else:
+        print("ERROR: Image response did not include b64_json or url data.", file=sys.stderr)
+        sys.exit(1)
     save_metadata(args, result, args.output)
     print("INFO: Done.")
 
