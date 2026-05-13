@@ -13,7 +13,7 @@ call Azure OpenAI to produce images.
 | GitHub repository with Actions enabled | This repository |
 | Azure subscription | Any tier |
 | Azure OpenAI resource | Must be in a region that supports image generation |
-| Image model deployment | E.g. a `dall-e-3` deployment |
+| Image model deployment | E.g. a `gpt-image-2` deployment |
 | Microsoft Entra application or managed identity | Used by GitHub Actions to authenticate |
 | `Azure AI User` role assignment | Assign to the identity on the Azure OpenAI resource |
 
@@ -77,18 +77,19 @@ az ad app federated-credential create \
 
 ---
 
-## GitHub repository variables
+## GitHub repository configuration
 
-Add these as **repository variables** (Settings → Secrets and variables →
-Actions → Variables):
+Add these as **repository variables** or **repository secrets** (Settings →
+Secrets and variables → Actions). The workflow checks variables first and
+falls back to secrets with the same names.
 
-| Variable | Example value |
+| Name | Example value |
 |---|---|
 | `AZURE_CLIENT_ID` | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 | `AZURE_TENANT_ID` | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 | `AZURE_SUBSCRIPTION_ID` | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
 | `AZURE_OPENAI_ENDPOINT` | `https://my-resource.openai.azure.com/` |
-| `AZURE_OPENAI_IMAGE_DEPLOYMENT` | E.g. `my-dalle3` (deployment name, NOT model name) |
+| `AZURE_OPENAI_IMAGE_DEPLOYMENT` | E.g. `gpt-image-2` (deployment name, NOT model name) |
 
 ### Optional API-key fallback
 
