@@ -106,6 +106,17 @@ authentication enabled, add this as a **repository secret**:
 
 ## Running the workflow
 
+### From an issue label
+
+1. Create a GitHub issue whose title and body describe the image to generate.
+2. Add the `generate-image` label to the issue.
+3. The **Generate Image from Issue** workflow calls the reusable
+  **Generate Image with Azure OpenAI** workflow.
+4. When the run completes, download the **generated-image** artifact which
+  contains the image file and a JSON metadata sidecar.
+
+### Manually
+
 1. Go to **Actions** in the repository.
 2. Select **Generate Image with Azure OpenAI**.
 3. Click **Run workflow**.
@@ -129,7 +140,8 @@ authentication enabled, add this as a **repository secret**:
 ```
 .github/
   workflows/
-    generate-image.yml   GitHub Actions workflow
+    generate-image.yml             Reusable/manual image generation workflow
+    generate-image-from-issue.yml  Issue-label trigger workflow
 scripts/
   generate-image.py      Python image generation script
 requirements.txt         Python dependencies

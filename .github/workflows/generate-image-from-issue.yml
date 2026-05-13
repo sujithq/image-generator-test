@@ -1,0 +1,23 @@
+name: Generate Image from Issue
+
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+
+permissions:
+  id-token: write
+  contents: read
+  issues: read
+
+jobs:
+  generate-image:
+    if: contains(github.event.issue.labels.*.name, 'generate-image')
+    uses: ./.github/workflows/generate-image.yml
+    with:
+      prompt: ${{ format('{0}\n\n{1}', github.event.issue.title, github.event.issue.body) }}
+      size: 1024x1024
+      quality: medium
+      output_filename: issue-${{ github.event.issue.number }}.png
+    secrets: inherit

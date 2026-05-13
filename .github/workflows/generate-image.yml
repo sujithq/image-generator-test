@@ -27,6 +27,27 @@ on:
         required: false
         default: "image.png"
         type: string
+  workflow_call:
+    inputs:
+      prompt:
+        description: "Image generation prompt"
+        required: true
+        type: string
+      size:
+        description: "Image size (e.g. 1024x1024, 1536x1024, 1024x1536)"
+        required: false
+        default: "1024x1024"
+        type: string
+      quality:
+        description: "Image quality"
+        required: false
+        default: "medium"
+        type: string
+      output_filename:
+        description: "Output filename (e.g. output.png)"
+        required: false
+        default: "image.png"
+        type: string
 
 permissions:
   id-token: write
