@@ -118,6 +118,8 @@ def build_client(settings: dict):
             api_version=AZURE_OPENAI_API_VERSION,
         )
 
+    os.environ.pop("AZURE_OPENAI_API_KEY", None)
+
     # Default path: token credential (GitHub Actions OIDC or managed identity).
     try:
         from azure.identity import DefaultAzureCredential, get_bearer_token_provider  # type: ignore
